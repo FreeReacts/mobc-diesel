@@ -1,0 +1,20 @@
+[package]
+name = "mobc-diesel"
+version = "1.0.0"
+authors = ["WhizSid <whizsid@aol.com>"]
+license = "MIT"
+edition = "2018"
+description = "mobc support for Diesel"
+homepage = "https://github.com/FreeReacts/mobc-diesel"
+repository = "https://github.com/FreeReacts/mobc-diesel"
+
+[dependencies]
+mobc = "0.5.12"
+diesel = "1.4.5"
+async-trait = "0.1.40"
+
+[dev-dependencies]
+futures-await-test = "0.3.0"
+tokio = {version = "0.2.22", default-features = false, features=["rt-core"]}
+diesel = {version = "1.4.5", features = ["sqlite", "postgres"]}
+
