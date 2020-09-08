@@ -1,7 +1,7 @@
 mobc-diesel
 ===========
 
-Provides [mobc](https://github.com/FreeReacts/mobc) support to allow connection pooling with Diesel.
+Provides [mobc](https://github.com/importcjj/mobc) support to allow connection pooling with Diesel.
 
 Examples
 ========
@@ -21,10 +21,11 @@ extern crate mobc;
 extern crate mobc_diesel;
 extern crate tokio;
 
-use diesel::PgConnection;
+use diesel::pg::PgConnection;
 use mobc_diesel::ConnectionManager;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let manager = ConnectionManager::<PgConnection>::new("postgres://localhost/");
     let pool = mobc::Pool::builder().build(manager);
 

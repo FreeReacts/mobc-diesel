@@ -15,8 +15,7 @@ pub struct ConnectionManager<T> {
     _marker: PhantomData<T>,
 }
 
-unsafe impl<T: Send + 'static> Sync for ConnectionManager<T> {
-}
+unsafe impl<T: Send + 'static> Sync for ConnectionManager<T> {}
 
 impl<T> ConnectionManager<T> {
     pub fn new<S: Into<String>>(database_url: S) -> Self {
@@ -52,18 +51,20 @@ impl ::std::error::Error for Error {
 }
 
 #[async_trait]
-impl<T> ManageConnection for ConnectionManager<T> where
+impl<T> ManageConnection for ConnectionManager<T>
+where
     T: Connection + Send + 'static,
 {
     type Connection = T;
     type Error = Error;
 
     async fn connect(&self) -> Result<T, Error> {
-        T::establish(&self.database_url)
-            .map_err(Error::ConnectionError)
+        T::establish(&self.database_url).map_err(Error::ConnectionError)
     }
 
     async fn check(&self, conn: T) -> Result<T, Error> {
-        conn.execute("SELECT 1").map(|_| conn).map_err(Error::QueryError)
+        conn.execute("SELECT 1")
+            .map(|_| conn)
+            .map_err(Error::QueryError)
     }
 }

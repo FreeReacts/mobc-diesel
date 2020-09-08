@@ -2,87 +2,106 @@ extern crate diesel;
 extern crate mobc;
 extern crate mobc_diesel;
 extern crate tokio;
-#[macro_use]
-extern crate futures_await_test;
 
 use std::sync::Arc;
-use std::sync::mpsc;
+use tokio::sync::mpsc;
 
 use diesel::{pg::PgConnection, sqlite::SqliteConnection};
 use mobc_diesel::ConnectionManager;
+use tokio::runtime::Runtime;
 
-#[async_test]
-async fn pg_basic_connection() {
-    let manager = ConnectionManager::<PgConnection>::new("postgres://localhost/");
-    let pool = Arc::new(mobc::Pool::builder().build(manager));
+#[test]
+fn pg_basic_connection() {
+    let mut rt = Runtime::new().unwrap();
 
-    let (s1, r1) = mpsc::channel();
-    let (s2, r2) = mpsc::channel();
+    // Spawn the root task
+    rt.block_on(async {
+        let manager = ConnectionManager::<PgConnection>::new("postgres://localhost/");
+        let pool = Arc::new(mobc::Pool::builder().build(manager));
 
-    let pool1 = pool.clone();
-    let t1 = tokio::spawn(async move {
-        let conn = pool1.get().await.unwrap();
-        s1.send(()).unwrap();
-        r2.recv().unwrap();
-        drop(conn);
+        let (mut s1, mut r1) = mpsc::channel(10);
+        let (mut s2, mut r2) = mpsc::channel(10);
+
+        let pool1 = pool.clone();
+        let t1 = tokio::spawn(async move {
+            let conn = pool1.get().await.unwrap();
+            s1.send(()).await.unwrap();
+            r2.recv().await.unwrap();
+            drop(conn);
+        });
+
+        let pool2 = pool.clone();
+        let t2 = tokio::spawn(async move {
+            let conn = pool2.get().await.unwrap();
+            s2.send(()).await.unwrap();
+            r1.recv().await.unwrap();
+            drop(conn);
+        });
+
+        t1.await.unwrap();
+        t2.await.unwrap();
+
+        pool.get().await.unwrap();
     });
-
-    let pool2 = pool.clone();
-    let t2 = tokio::spawn( async move {
-        let conn = pool2.get().await.unwrap();
-        s2.send(()).unwrap();
-        r1.recv().unwrap();
-        drop(conn);
-    });
-
-    t1.await.unwrap();
-    t2.await.unwrap();
-
-    pool.get().await.unwrap();
 }
 
-#[async_test]
-async fn pg_is_valid() {
-    let manager = ConnectionManager::<PgConnection>::new("postgres://localhost/");
-    let pool = mobc::Pool::builder().test_on_check_out(true).build(manager);
+#[test]
+fn pg_is_valid() {
+    let mut rt = Runtime::new().unwrap();
 
-    pool.get().await.unwrap();
+    // Spawn the root task
+    rt.block_on(async {
+        let manager = ConnectionManager::<PgConnection>::new("postgres://localhost/");
+        let pool = mobc::Pool::builder().test_on_check_out(true).build(manager);
+
+        pool.get().await.unwrap();
+    });
 }
 
-#[async_test]
-async fn sqlite_basic_connection() {
-    let manager = ConnectionManager::<SqliteConnection>::new("test.db");
-    let pool = Arc::new(mobc::Pool::builder().build(manager));
+#[test]
+fn sqlite_basic_connection() {
+    let mut rt = Runtime::new().unwrap();
 
-    let (s1, r1) = mpsc::channel();
-    let (s2, r2) = mpsc::channel();
+    // Spawn the root task
+    rt.block_on(async {
+        let manager = ConnectionManager::<SqliteConnection>::new("test.db");
+        let pool = Arc::new(mobc::Pool::builder().build(manager));
 
-    let pool1 = pool.clone();
-    let t1 = tokio::spawn( async move {
-        let conn = pool1.get().await.unwrap();
-        s1.send(()).unwrap();
-        r2.recv().unwrap();
-        drop(conn);
+        let (mut s1, mut r1) = mpsc::channel(10);
+        let (mut s2, mut r2) = mpsc::channel(10);
+
+        let pool1 = pool.clone();
+        let t1 = tokio::spawn(async move {
+            let conn = pool1.get().await.unwrap();
+            s1.send(()).await.unwrap();
+            r2.recv().await.unwrap();
+            drop(conn);
+        });
+
+        let pool2 = pool.clone();
+        let t2 = tokio::spawn(async move {
+            let conn = pool2.get().await.unwrap();
+            s2.send(()).await.unwrap();
+            r1.recv().await.unwrap();
+            drop(conn);
+        });
+
+        t1.await.unwrap();
+        t2.await.unwrap();
+
+        pool.get().await.unwrap();
     });
-
-    let pool2 = pool.clone();
-    let t2 = tokio::spawn( async move {
-        let conn = pool2.get().await.unwrap();
-        s2.send(()).unwrap();
-        r1.recv().unwrap();
-        drop(conn);
-    });
-
-    t1.await.unwrap();
-    t2.await.unwrap();
-
-    pool.get().await.unwrap();
 }
 
-#[async_test]
-async fn sqlite_is_valid() {
-    let manager = ConnectionManager::<SqliteConnection>::new("test.db");
-    let pool = mobc::Pool::builder().test_on_check_out(true).build(manager);
+#[test]
+fn sqlite_is_valid() {
+    let mut rt = Runtime::new().unwrap();
 
-    pool.get().await.unwrap();
+    // Spawn the root task
+    rt.block_on(async {
+        let manager = ConnectionManager::<SqliteConnection>::new("test.db");
+        let pool = mobc::Pool::builder().test_on_check_out(true).build(manager);
+
+        pool.get().await.unwrap();
+    });
 }
