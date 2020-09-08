@@ -14,7 +14,6 @@ diesel = "1.4.5"
 async-trait = "0.1.40"
 
 [dev-dependencies]
-futures-await-test = "0.3.0"
 tokio = {version = "0.2.22", features=["rt-core", "macros", "sync"]}
 diesel = {version = "1.4.5", features = ["sqlite", "postgres"]}
 
